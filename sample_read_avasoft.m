@@ -4,7 +4,7 @@ clear all; close all
 % Data directory: CHANGE THIS!
 datadir  = '~/Nextcloud/data/turbulent-mixing/avasoft/dye_concentrations/';
 ifile    = 'red_dye/red10/red10_1602173U5.txt';
-plot_opt = 'full';  % 'tavg'
+plot_opt = 'tavg';  % 'tavg'
 
 
 %%
