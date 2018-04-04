@@ -29,46 +29,78 @@ A = importdata(file,';');
 
 % Parse meta data'
 met = A.textdata(:,1:3);
-headers = char('Run','dt','t_unit','n_steps','n_smooth','spectromter','mode','Units');
-str = textscan(met{1,1},'%s','Delimiter',':'); dat.run = str{1}{1};                    % experiment name
-str = textscan(met{2,1},'%s','Delimiter',':'); dat.t_int = str2double(str{1}{2});      % integration time
-str2 = strsplit(str{1}{1},' ') ;               dat.t_unit = str2{3};                    % time step units
-str = textscan(met{3,1},'%s','Delimiter',':'); dat.n_steps = str2num(str{1}{2});       % number of time steps
-str = textscan(met{4,1},'%s','Delimiter',':'); dat.n_smooth = str2num(str{1}{2});      % number of smoothed pixels
-str = textscan(met{5,1},'%s','Delimiter',':'); dat.spectrometer = str{1}{2};           % spectrometer name
-str = textscan(met{6,1},'%s','Delimiter',':'); dat.mode = str{1}{2};                   % measurement mode
-str = textscan(met{7,1},'%s','Delimiter',':'); dat.units = str{1}{2};                  % Intensity units
-
+% headers = char('Run','dt','t_unit','n_steps','n_smooth','spectromter','mode','Units');
+% str = textscan(met{1,1},'%s','Delimiter',':'); dat.run = str{1}{1};                    % experiment name
+% str = textscan(met{2,1},'%s','Delimiter',':'); dat.t_int = str2double(str{1}{2});      % integration time
+% str2 = strsplit(str{1}{1},' ') ;               dat.t_unit = str2{3};                    % time step units
+% str = textscan(met{3,1},'%s','Delimiter',':'); dat.n_steps = str2num(str{1}{2});       % number of time steps
+% str = textscan(met{4,1},'%s','Delimiter',':'); dat.n_smooth = str2num(str{1}{2});      % number of smoothed pixels
+% str = textscan(met{5,1},'%s','Delimiter',':'); dat.spectrometer = str{1}{2};           % spectrometer name
+% str = textscan(met{6,1},'%s','Delimiter',':'); dat.mode = str{1}{2};                   % measurement mode
+% str = textscan(met{7,1},'%s','Delimiter',':'); dat.units = str{1}{2};                  % Intensity units
+% 'red dye, [0.10]'
+%     'Integration time [ms]:   4.122'
+%     'Nr. of StoreToRam scans: 126'
+%     'Smoothing Nr. [pixels]: 0'
+%     'Data measured with spectrometer [name]: 1602173U5'
+%     'Measurement mode: Scope'
+%     'Units: [counts]'
+%     'Wave   ;Dark     ;Reference;Samples'
+%     '[nm]   '
+dat.comment = {};
+for i = 1:size(met,1)
+    str = textscan(met{i,1},'%s','Delimiter',':');
+    if strfind(str{1}{1},'Integration time')
+        dat.t_int = str2double(str{1}{2});                              % integration time
+        str2 = strsplit(str{1}{1},' ') ;   dat.t_unit = str2{3};        % time step units
+    elseif strfind(str{1}{1},'Nr. of StoreToRam scans')
+        dat.n_steps = str2num(str{1}{2});                               % number of time steps
+    elseif strfind(str{1}{1},'Smoothing Nr.')
+        dat.n_smooth = str2num(str{1}{2});                              % number of smoothed pixels
+    elseif strfind(str{1}{1},'Data measured with spectrometer')
+        dat.spectrometer = str{1}{2};                                   % spectrometer name
+    elseif strfind(str{1}{1},'Measurement mode')
+        dat.mode = str{1}{2};                                           % measurement mode
+    elseif strfind(str{1}{1},'Units')
+        dat.units = str{1}{2};                                          % Intensity units
+    elseif isempty(strfind(str{1}{1},'Wave')) && isempty(strfind(str{1}{1},'[nm]'))
+        dat.comment{numel(dat.comment)+1} = str{1}{1};                  % experiment name
+    end
+end
 % Get data matrix and vectors - there is some uncertainty as to whether I
 % did this right...
-dat.t = 0:dat.t_int:dat.t_int*(dat.n_steps-1);
-dat.lambda = A.data(2:end,1);
-dat.I = A.data(2:end,4:end);
+% dat.t = 0:dat.t_int:dat.t_int*(dat.n_steps-1);
+dat.t        = A.data(1,5:end);
+dat.lambda   = A.data(2:end,1);
+dat.I        = A.data(2:end,5:end);  % CURRENTLY SKIPPING FIRST MEASUREMENT BECAUSE FIRST TIME IS FUCKED/CONFUSING
 dat.n_lambda = size(dat,1);                                                         % number wavelength samples
 
 % Quick check
-if size(dat.I,2)~=dat.n_steps
+if size(dat.I,2)~=numel(dat.t); %dat.n_steps
     error('Data and time vectors do not match in size! Ya dun broke sumthin...')
 end
 
 % Reference wavelengths
-dat.lam_dark = A.data(2:end,2);
-dat.lam_ref  = A.data(2:end,3);
+dat.dark = A.data(2:end,2);
+dat.ref  = A.data(2:end,3);
 
 % Optional plot(s)?
 if ~isempty(plot_opt)
+    figure
     if strcmp(plot_opt,'full')
-        figure
         surf(dat.t,dat.lambda,dat.I,'EdgeAlpha',0.05)
         xlabel(sprintf('t %s',dat.t_unit))
         ylabel(sprintf('%s %s','\lambda',A.colheaders{1}))
         zlabel(sprintf('%s %s',dat.mode,dat.units))
     elseif strcmp(plot_opt,'tavg')
-        figure
+        plot(dat.lambda,dat.dark,'--k','linewidth',2)
+        hold on
+        plot(dat.lambda,dat.ref,'color',[0.4 0.4 0.4])
         plot(dat.lambda,mean(dat.I,2))
-        xlabel(sprintf('t %s',dat.t_unit))
+        xlabel(sprintf('%s [nm]','\lambda'))
         ylabel(sprintf('%s %s',dat.mode,dat.units))
         title('Time-averaged amplitude')
+        legend('Dark','Ref','Run')
     else
         disp('Plot option not recognized, plotting skipped.')
     end
