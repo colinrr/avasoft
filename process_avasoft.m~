@@ -57,7 +57,7 @@ for i = 1:numel(ifiles)
 %     plot(dat(i).t,dat(i).I(ix,:),'linewidth',2)
     xlabel('time?')
     ylabel(sprintf('Normalized %s',amp))
-    title(sprintf('%s: %s',name,laml))
+    title(sprintf(': %s',name,laml))
     legend(dat.spectrometer,'Location','SouthEast')
 end
 

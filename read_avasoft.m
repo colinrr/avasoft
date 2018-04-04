@@ -92,6 +92,7 @@ if ~isempty(plot_opt)
         xlabel(sprintf('t %s',dat.t_unit))
         ylabel(sprintf('%s %s','\lambda',A.colheaders{1}))
         zlabel(sprintf('%s %s',dat.mode,dat.units))
+        title(sprintf('%s: 3D spectrum',dat.spectrometer))
     elseif strcmp(plot_opt,'tavg')
         plot(dat.lambda,dat.dark,'--k','linewidth',2)
         hold on
@@ -99,8 +100,9 @@ if ~isempty(plot_opt)
         plot(dat.lambda,mean(dat.I,2))
         xlabel(sprintf('%s [nm]','\lambda'))
         ylabel(sprintf('%s %s',dat.mode,dat.units))
-        title('Time-averaged amplitude')
+        title(sprintf('%s: Time-averaged amplitude',dat.spectrometer))
         legend('Dark','Ref','Run')
+        hold off
     else
         disp('Plot option not recognized, plotting skipped.')
     end
