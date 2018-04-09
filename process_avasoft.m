@@ -5,7 +5,7 @@ clear all; close all
 % datadir  = '~/Nextcloud/data/turbulent-mixing/avasoft/4.02.2018/run2_mixedblue';
 datadir  = '~/Nextcloud/data/turbulent-mixing/avasoft/4-02-2018/run1_hit7withblue/';
 % ifile    = 'run2_mixedblue/';
-plot_opt = []; %'full';  % 'tavg', []
+plot_opt = 'full'; %'full';  % 'tavg', []
 
 % ifiles    = {'red_dye/fresh/fresh_1602173U5.txt'};
 % ifiles  = {'73_1602173U5.TXT',  '74_1602174U5.TXT'};
@@ -14,6 +14,7 @@ plot_opt = []; %'full';  % 'tavg', []
 
 % Wavelength(s) - choose a single number, a range [min max], or empty []
 lambda_pick = [450 700]; %640;
+ref_band    = [800 1000]; % Use this band to normalize to
 
 
 %%
@@ -35,14 +36,18 @@ for i = 1:numel(ifiles)
         I = dat(i).I(ix,:);
         laml = sprintf('%.1f nm',lambda);
     elseif numel(lambda_pick)==2
-        ix = find(and(dat(i).lambda>min(lambda_pick),dat(i).lambda<max(lambda_pick)));
+        ix   = find(and(dat(i).lambda>min(lambda_pick),dat(i).lambda<max(lambda_pick)));
+        iref = find(and(dat(i).lambda>min(ref_band),dat(i).lambda<max(ref_band)));
         lambda = dat(i).lambda(ix);
+        lam_ref = dat(i).lambda(iref);
         amp = '"Power"';
         I = dat(i).I(ix,:);
-        figure
-        surf(dat(i).t,lambda,I,'EdgeAlpha',0.05)
+        R = dat(i).I(iref,:);
+%         figure
+%         surf(dat(i).t,lambda,I,'EdgeAlpha',0.05)
         % Calc total power in this band
         I = trapz(lambda,I,1);
+        R = trapz(lam_ref,R,1);
         laml = sprintf('%.1f - %.1f nm',min(lambda),max(lambda));
     elseif ~isempty(lambda_pick)
         error('Can''t process wavelength selection')
